@@ -1,6 +1,6 @@
 {
-  "build": {
-    "builder": "nixpacks"
-  },
-  "start": "gunicorn app:app --bind 0.0.0.0:$PORT"
+  "$schema": "https://railway.app/railway.schema.json",
+  "deploy": {
+    "startCommand": "gunicorn app:app --bind 0.0.0.0:$PORT"
+  }
 }
