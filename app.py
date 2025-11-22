@@ -10,8 +10,8 @@ LOW_VALUE_WEBHOOK = "https://discord.com/api/webhooks/1440813903012434112/FRg-sE
 HIGHLIGHT_MIN = 11_000_000
 LOW_VALUE_MAX = 10_999_999
 
-# Railway volume is mounted at /data → we use subfolder to avoid permission issues
-STORAGE_DIR = "/data/petfinder"
+# Fly.io mounts persistent volume at /data
+STORAGE_DIR = "/data"
 JSON_FILE = os.path.join(STORAGE_DIR, "lo.json")
 
 os.makedirs(STORAGE_DIR, exist_ok=True)
@@ -33,14 +33,14 @@ def parse_value(t):
 def send_highlight(player, pets):
     high = [f"{p.get('display_name','Pet')} — {p.get('generation','0')}" for p in pets if parse_value(p.get("generation","0")) >= HIGHLIGHT_MIN]
     if high:
-        requests.post(DISCORD_WEBHOOK, json={"embeds": [{"title": "High Value Pet!", "color": 16711680, "fields": [{"name": "Player", "value": player}, {"name": "≥11M/s", "value": "\n".join(high)}]}]})
+        requests.post(DISCORD_WEBHOOK, json={"embeds": [{"title": "High Value Pet Found!", "color": 16711680, "fields": [{"name": "Player", "value": player}, {"name": "≥11M/s", "value": "\n".join(f"**{x}**" for x in high)}], "timestamp": datetime.datetime.utcnow().isoformat()}]})
 
 def send_low(player, pets):
     low = [f"{p.get('display_name','Pet')} — {p.get('generation','0')}" for p in pets if parse_value(p.get("generation","0")) <= LOW_VALUE_MAX]
     if low:
-        requests.post(LOW_VALUE_WEBHOOK, json={"embeds": [{"title": "Low Value Pets", "color": 255, "fields": [{"name": "Player", "value": player}, {"name": "≤10M/s", "value": "\n".join(low)}]}]})
+        requests.post(LOW_VALUE_WEBHOOK, json={"embeds": [{"title": "Low Value Pets", "color": 255, "fields": [{"name": "Player", "value": player}, {"name": "≤10M/s", "value": "\n".join(low)}], "timestamp": datetime.datetime.utcnow().isoformat()}]})
 
-@app.route("/upload", methods=["POST"])
+@app.route("/upload/", methods=["POST"])
 def upload():
     try:
         data = request.get_json(force=True)
@@ -61,7 +61,7 @@ def upload():
 def home():
     try: count = len(json.load(open(JSON_FILE)))
     except: count = 0
-    return jsonify({"message": "Pet Logger Active on Railway", "logs": count, "view": "/data"})
+    return jsonify({"message": "Pet Logger Running on Fly.io", "logs": count, "view": "/data"})
 
 @app.route("/data")
 def view():
@@ -69,4 +69,4 @@ def view():
     except: return jsonify([])
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
