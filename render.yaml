@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: petfinder-ws
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    disks:
+      - name: data
+        mountPath: /data
+        sizeGB: 1
